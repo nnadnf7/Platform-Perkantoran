@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Perkantoran Modern</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:"Poppins",sans-serif;}
+    body{
+      background: linear-gradient(270deg,#667eea,#764ba2,#ff6b6b,#4ecdc4);
+      background-size:800% 800%;
+      animation: gradientShift 15s ease infinite;
+      color:#fff;transition:.4s;
+    }
+    @keyframes gradientShift{
+      0%{background-position:0% 50%;}
+      50%{background-position:100% 50%;}
+      100%{background-position:0% 50%;}
+    }
+    body.dark{
+      background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+      color:#eee;
+    }
+
+    nav{
+      position:fixed;top:0;left:0;width:100%;
+      background:rgba(0,0,0,0.4);backdrop-filter:blur(10px);
+      padding:15px 40px;display:flex;justify-content:space-between;align-items:center;
+      z-index:1000;
+    }
+    nav h2{font-size:22px;}
+    nav ul{list-style:none;display:flex;gap:25px;}
+    nav ul li a{color:#fff;text-decoration:none;font-weight:500;padding:8px 18px;border-radius:20px;cursor:pointer;}
+    nav ul li a:hover{background:#ffdd57;color:#333;}
+    .toggle{background:#ffdd57;color:#333;border:none;padding:8px 15px;border-radius:20px;cursor:pointer;}
+
+    section{max-width:1100px;margin:100px auto;padding:20px;display:none;}
+    section.active{display:block;}
+    h2{text-align:center;margin-bottom:20px;color:#ffdd57;}
+
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;}
+    .card{
+      background:rgba(255,255,255,0.1);padding:20px;border-radius:15px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:.3s;text-align:center;
+    }
+    body.dark .card{background:rgba(20,30,50,0.9);}
+    .card:hover{transform:translateY(-5px);}
+    .stat-number{font-size:32px;font-weight:700;margin:10px 0;}
+
+    .progress-bar{width:100%;background:#eee;border-radius:10px;overflow:hidden;margin-top:10px;}
+    .progress{height:10px;background:linear-gradient(90deg,#667eea,#764ba2);transition:width .5s ease;}
+
+    table{width:100%;border-collapse:collapse;margin-top:20px;background:rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;}
+    th,td{padding:12px;text-align:center;}
+    th{background:#6a11cb;}
+    tr:nth-child(even){background:rgba(255,255,255,0.05);}
+    tr:hover{background:rgba(255,255,255,0.15);}
+    input,select,button{padding:10px;border:none;border-radius:8px;margin:5px;}
+    input.search{width:100%;}
+
+    #notification{
+      position:fixed;top:20px;right:-300px;background:#4ecdc4;
+      color:#fff;padding:15px 20px;border-radius:10px;
+      box-shadow:0 3px 8px rgba(0,0,0,.2);
+      transition:right .5s ease;z-index:2000;
+    }
+    #notification.show{right:20px;}
+
+    footer{text-align:center;padding:20px;background:rgba(0,0,0,0.5);margin-top:40px;}
+  </style>
+</head>
+<body>
+  <nav>
+    <h2>🏢 Dashboard Kantor</h2>
+    <ul>
+      <li><a onclick="showSection('stats')">Statistik</a></li>
+      <li><a onclick="showSection('proyek')">Proyek</a></li>
+      <li><a onclick="showSection('karyawan')">Karyawan</a></li>
+      <li><a onclick="showSection('absensi')">Absensi</a></li>
+    </ul>
+    <button class="toggle" onclick="toggleDarkMode()">🌙 Mode</button>
+  </nav>
+
+  <!-- Statistik -->
+  <section id="stats" class="active">
+    <h2>📊 Statistik Kantor</h2>
+    <div class="cards">
+      <div class="card">
+        <p>Total Karyawan</p>
+        <div class="stat-number" id="totalEmployees">0</div>
+      </div>
+      <div class="card">
+        <p>Proyek Aktif</p>
+        <div class="stat-number" id="activeProjects">0</div>
+      </div>
+      <div class="card">
+        <p>Barang Inventaris</p>
+        <div class="stat-number" id="inventaris">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Proyek -->
+  <section id="proyek">
+    <h2>📈 Progress Proyek</h2>
+    <div class="card">
+      <form id="proyekForm">
+        <input type="text" id="namaProyek" placeholder="Nama Proyek" required>
+        <input type="number" id="progressProyek" placeholder="Progress (%)" min="0" max="100" required>
+        <button type="submit">Tambah Proyek</button>
+      </form>
+    </div>
+    <div class="cards" id="proyekList"></div>
+  </section>
+
+  <!-- Karyawan -->
+  <section id="karyawan">
+    <h2>👩‍💼 Data Karyawan</h2>
+    <div class="card">
+      <form id="karyawanForm">
+        <input type="text" id="namaBaru" placeholder="Nama Karyawan" required>
+        <input type="text" id="jabatanBaru" placeholder="Jabatan" required>
+        <input type="text" id="departemenBaru" placeholder="Departemen" required>
+        <button type="submit">Tambah Karyawan</button>
+      </form>
+    </div>
+    <input type="text" id="searchInput" class="search" placeholder="🔍 Cari karyawan...">
+    <table id="employeeTable">
+      <thead>
+        <tr><th>No</th><th>Nama</th><th>Jabatan</th><th>Departemen</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- Absensi -->
+  <section id="absensi">
+    <h2>🕒 Absensi Karyawan</h2>
+    <div class="card">
+      <form id="absensiForm">
+        <input type="text" id="namaKaryawan" placeholder="Nama Karyawan" required>
+        <button type="button" onclick="absenMasuk()">Absen Masuk</button>
+        <button type="button" onclick="absenPulang()">Absen Pulang</button>
+      </form>
+    </div>
+    <table id="absensiTable">
+      <thead>
+        <tr><th>No</th><th>Nama</th><th>Waktu</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- Footer -->
+  <footer>&copy; Dashboard Kantor</footer>
+  
+  <div id="notification">✅ Data berhasil disimpan!</div>
+
+  <script>
+    // ------------------ GLOBAL ------------------
+    function animateNumber(id,target){
+      let count=0;const el=document.getElementById(id);
+      const step=Math.ceil(target/50);
+      const interval=setInterval(()=>{
+        count+=step;
+        if(count>=target){count=target;clearInterval(interval);}
+        el.innerText=count;
+      },30);
+    }
+
+    function toggleDarkMode(){
+      document.body.classList.toggle("dark");
+    }
+
+    function showNotification(msg){
+      const notif=document.getElementById("notification");
+      notif.innerText=msg;
+      notif.classList.add("show");
+      setTimeout(()=>notif.classList.remove("show"),3000);
+    }
+
+    function showSection(id){
+      document.querySelectorAll("section").forEach(sec=>sec.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    // ------------------ KARYAWAN ------------------
+    let employeeData = [
+      {nama:"Budi",jabatan:"Project Manager",departemen:"Proyek"},
+      {nama:"Sari",jabatan:"Site Engineer",departemen:"Teknik"},
+      {nama:"Andi",jabatan:"Quantity Surveyor",departemen:"Estimasi"},
+      {nama:"Dewi",jabatan:"Safety Officer",departemen:"K3"},
+      {nama:"Rudi",jabatan:"Mandor Lapangan",departemen:"Lapangan"}
+    ];
+
+    function updateEmployeeTable(){
+      let tbody=document.querySelector("#employeeTable tbody");
+      tbody.innerHTML="";
+      employeeData.forEach((e,i)=>{
+        tbody.innerHTML+=`
+          <tr>
+            <td>${i+1}</td>
+            <td>${e.nama}</td>
+            <td>${e.jabatan}</td>
+            <td>${e.departemen}</td>
+          </tr>`;
+      });
+      document.getElementById("totalEmployees").innerText=employeeData.length;
+    }
+
+    document.getElementById("karyawanForm").addEventListener("submit",function(e){
+      e.preventDefault();
+      let nama=document.getElementById("namaBaru").value;
+      let jabatan=document.getElementById("jabatanBaru").value;
+      let departemen=document.getElementById("departemenBaru").value;
+      employeeData.push({nama,jabatan,departemen});
+      updateEmployeeTable();
+      showNotification("Karyawan berhasil ditambahkan!");
+      this.reset();
+    });
+
+    document.getElementById("searchInput").addEventListener("keyup",function(){
+      let filter=this.value.toLowerCase();
+      document.querySelectorAll("#employeeTable tbody tr").forEach(row=>{
+        row.style.display=row.innerText.toLowerCase().includes(filter)?"":"none";
+      });
+    });
+
+    // ------------------ PROYEK ------------------
+    let proyekData = [
+      { nama: "Jalan Raya & Jembatan", progress: 75 },
+      { nama: "Pelabuhan & Bandara", progress: 50 }
+    ];
+
+    function updateProyekList() {
+      let container = document.getElementById("proyekList");
+      container.innerHTML = "";
+      proyekData.forEach((p) => {
+        let card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>${p.nama}</h3>
+          <p>Progress: ${p.progress}%</p>
+          <div class="progress-bar"><div class="progress" style="width:${p.progress}%;"></div></div>
+        `;
+        container.appendChild(card);
+      });
+      document.getElementById("activeProjects").innerText = proyekData.length;
+    }
+
+    document.getElementById("proyekForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      let nama = document.getElementById("namaProyek").value;
+      let progress = parseInt(document.getElementById("progressProyek").value);
+
+      if(progress < 0 || progress > 100){
+        alert("Progress harus antara 0 - 100!");
+        return;
+      }
+
+      proyekData.push({ nama, progress });
+      updateProyekList();
+      showNotification("Proyek berhasil ditambahkan!");
+      this.reset();
+    });
+
+    // ------------------ ABSENSI ------------------
+    let absensiData = JSON.parse(localStorage.getItem("absensiData")) || [];
+
+    function updateAbsensiTable(){
+      let tbody=document.querySelector("#absensiTable tbody");
+      tbody.innerHTML="";
+      absensiData.forEach((a,i)=>{
+        tbody.innerHTML+=`
+          <tr>
+            <td>${i+1}</td>
+            <td>${a.nama}</td>
+            <td>${a.waktu}</td>
+          </tr>`;
+      });
+    }
+
+    function absenMasuk(){
+      let nama=document.getElementById("namaKaryawan").value;
+      if(!nama) return;
+      let now=new Date();
+      let jam=now.getHours();
+      let waktu;
+
+      if(jam < 6){
+        showNotification("⛔ Absensi masuk hanya dibuka mulai jam 06.00!");
+        document.getElementById("absensiForm").reset();
+        return;
+      }
+
+      if(jam > 7){
+        waktu = `${now.toLocaleString()} (Terlambat)`;
+      } else {
+        waktu = now.toLocaleString();
+      }
+
+      absensiData.push({nama,waktu});
+      localStorage.setItem("absensiData", JSON.stringify(absensiData));
+      updateAbsensiTable();
+      showNotification("✅ Absensi masuk berhasil!");
+      document.getElementById("absensiForm").reset();
+    }
+
+    function absenPulang(){
+      let nama=document.getElementById("namaKaryawan").value;
+      if(!nama) return;
+      let now=new Date();
+      let waktu=now.toLocaleString();
+      absensiData.push({nama,waktu});
+      localStorage.setItem("absensiData", JSON.stringify(absensiData));
+      updateAbsensiTable();
+      showNotification("✅ Absensi pulang berhasil!");
+      document.getElementById("absensiForm").reset();
+    }
+
+    // ------------------ INIT ------------------
+    window.onload=function(){
+      animateNumber("totalEmployees",employeeData.length);
+      animateNumber("activeProjects",proyekData.length);
+      animateNumber("inventaris",120);
+      updateEmployeeTable();
+      updateProyekList();
+      updateAbsensiTable();
+      showNotification("Selamat datang di Dashboard! 🎉");
+    }
+  </script>
+</body>
+</html>
